@@ -1,0 +1,21 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    deep_merge (1.0.1)
+    httparty (0.13.1)
+      json (~> 1.8)
+      multi_xml (>= 0.5.2)
+    json (1.8.1)
+    mini_portile (0.6.1)
+    multi_xml (0.5.5)
+    nokogiri (1.6.5)
+      mini_portile (~> 0.6.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  deep_merge
+  httparty
+  json
+  nokogiri
