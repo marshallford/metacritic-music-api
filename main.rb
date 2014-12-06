@@ -12,7 +12,7 @@ require 'deep_merge'
 currentTime = Time.new.utc
 currentYear = Time.new.year
 
-# new releases by date
+# new releases
 metacriticNewReleasesURL = "http://www.metacritic.com/browse/albums/release-date/new-releases/date"
 artistTitleArray = []
 albumTitleArray = []
@@ -21,7 +21,7 @@ dateReleasedArray = []
 
 # get page and verify that it is a legit page
 begin
-openURLpage = open(metacriticNewReleasesURL)
+openURLpage = open(metacriticNewReleasesURL, {'User-Agent' => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"})
 rescue OpenURI::HTTPError => ex
 	File.open("log.txt","a") do |f|
   		f.write(currentTime.to_s + "    OpenURL Error: " + ex.to_s)
@@ -66,6 +66,6 @@ albumTitleArray.each_with_index do |item, index|
 end
 
 # save hash as json to file
-File.open("new-releases-date.json","w") do |f|
+File.open("new-releases.json","w") do |f|
   f.write(JSON.pretty_generate(JSON.parse(newReleases.to_json)))
 end
