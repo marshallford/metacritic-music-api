@@ -17,4 +17,3 @@ I wrote this API for my own purposes and to practice programming. If you see any
 # TO DO
 
 1. Documentation for setup on server
-2. Multiple page scraping support

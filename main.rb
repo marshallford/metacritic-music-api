@@ -12,49 +12,67 @@ require 'deep_merge'
 currentTime = Time.new.utc
 currentYear = Time.new.year
 
-# new releases
-metacriticNewReleasesURL = "http://www.metacritic.com/browse/albums/release-date/new-releases/date"
+# creates array of pages to scrape
+metacriticNewReleasesURLs = ["http://www.metacritic.com/browse/albums/release-date/new-releases/date"]
+urlIndex = 1 # start at one because the base page is index zero
+while true
+	tempURL = metacriticNewReleasesURLs[0] + "?page=" + urlIndex.to_s
+	openURLpage = open(tempURL, {'User-Agent' => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"})
+	if openURLpage.read.downcase.include? "no results found"
+		break
+	end
+	metacriticNewReleasesURLs[urlIndex] = tempURL
+	urlIndex = urlIndex + 1
+end
+
 artistTitleArray = []
 albumTitleArray = []
 metacriticScoreArray = []
 dateReleasedArray = []
+overallIndex = 0 # prevents the index from reseting after page
 
-# get page and verify that it is a legit page
-begin
-openURLpage = open(metacriticNewReleasesURL, {'User-Agent' => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"})
-rescue OpenURI::HTTPError => ex
-	File.open("log.txt","a") do |f|
-  		f.write(currentTime.to_s + "    OpenURL Error: " + ex.to_s + "\n")
+# loop through URLs and fill individual arrays
+metacriticNewReleasesURLs.each_with_index do |url, metacriticNewReleasesURLsIndex|
+	# abort if openURI returns an error
+	begin
+	openURLpage = open(url, {'User-Agent' => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"})
+	rescue OpenURI::HTTPError => ex
+		File.open("log.txt","a") do |f|
+	  		f.write(currentTime.to_s + "    OpenURI Error: " + ex.to_s + "\n")
+		end
+		abort
 	end
-	abort
-end
-if (openURLpage.size * 0.001) < 100
-	File.open("log.txt","a") do |f|
-  		f.write(currentTime.to_s + "    Page Size Error: Page size is " + (openURLpage.size * 0.001).to_s + "KB\n")
+	# abort if page size is less than 10KB
+	if (openURLpage.size * 0.001) < 10
+		File.open("log.txt","a") do |f|
+	  		f.write(currentTime.to_s + "    Page Size Error: Page size is " + (openURLpage.size * 0.001).to_s + "KB\n")
+		end
+		abort
 	end
-	abort
-end
-page = Nokogiri::HTML(openURLpage)
 
-# get album title
-page.css("").each_with_index do |albumTitle, index|
-	albumTitleArray[index] = albumTitle.text.strip
-end
+	page = Nokogiri::HTML(openURLpage) # create Nokogiri object
 
-# get artist title
-page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.condensed_stats > ul > li.stat.product_artist > span.data").each_with_index do |artistTitle, index|
-	artistTitleArray[index] = artistTitle.text.strip
-end
+	# get album title and add to array
+	page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.product_title > a").each_with_index do |albumTitle, index|
+		albumTitleArray[index+overallIndex] = albumTitle.text.strip
+	end
 
-# get metacritic score
-page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.product_score.brief_metascore > div").each_with_index do |metacriticScore, index|
-	metacriticScoreArray[index] = metacriticScore.text.strip
-end
+	# get artist title and add to array
+	page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.condensed_stats > ul > li.stat.product_artist > span.data").each_with_index do |artistTitle, index|
+		artistTitleArray[index+overallIndex] = artistTitle.text.strip
+	end
 
-# get and convert date
-page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.condensed_stats > ul > li.stat.release_date > span.data").each_with_index do |dateReleased, index|
-	date = Date.strptime(dateReleased.text.strip + " " + currentYear.to_s, "%b %e %Y")
-	dateReleasedArray[index] = date.to_s
+	# get metacritic score and add to array
+	page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.product_score.brief_metascore > div").each_with_index do |metacriticScore, index|
+		metacriticScoreArray[index+overallIndex] = metacriticScore.text.strip
+	end
+
+	# get/convert date and add to array
+	page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.condensed_stats > ul > li.stat.release_date > span.data").each_with_index do |dateReleased, index|
+		date = Date.strptime(dateReleased.text.strip + " " + currentYear.to_s, "%b %e %Y")
+		dateReleasedArray[index+overallIndex] = date.to_s
+	end
+	overallIndex = albumTitleArray.length
 end
 
 # verify realistic number of new releases
