@@ -24,20 +24,20 @@ begin
 openURLpage = open(metacriticNewReleasesURL, {'User-Agent' => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"})
 rescue OpenURI::HTTPError => ex
 	File.open("log.txt","a") do |f|
-  		f.write(currentTime.to_s + "    OpenURL Error: " + ex.to_s)
+  		f.write(currentTime.to_s + "    OpenURL Error: " + ex.to_s + "\n")
 	end
 	abort
 end
 if (openURLpage.size * 0.001) < 100
 	File.open("log.txt","a") do |f|
-  		f.write(currentTime.to_s + "    Page Size Error: Page size is " + (openURLpage.size * 0.001).to_s + "KB")
+  		f.write(currentTime.to_s + "    Page Size Error: Page size is " + (openURLpage.size * 0.001).to_s + "KB\n")
 	end
 	abort
 end
 page = Nokogiri::HTML(openURLpage)
 
 # get album title
-page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.product_title > a").each_with_index do |albumTitle, index|
+page.css("").each_with_index do |albumTitle, index|
 	albumTitleArray[index] = albumTitle.text.strip
 end
 
@@ -55,6 +55,14 @@ end
 page.css("#main > div.module.products_module.list_product_condensed_module > div.body > div.body_wrap > div > ol > li.product.release_product > div > div.basic_stat.condensed_stats > ul > li.stat.release_date > span.data").each_with_index do |dateReleased, index|
 	date = Date.strptime(dateReleased.text.strip + " " + currentYear.to_s, "%b %e %Y")
 	dateReleasedArray[index] = date.to_s
+end
+
+# verify realistic number of new releases
+if albumTitleArray.length > 10000 || albumTitleArray.length < 10
+	File.open("log.txt","a") do |f|
+  		f.write(currentTime.to_s + "    Number of Results Error: " + albumTitleArray.length.to_s + " result(s) recorded\n")
+	end
+	abort
 end
 
 # start the creation of the hash
