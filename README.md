@@ -4,7 +4,7 @@ Metacritic Music API based on the results of HTML scraping.
 
 I wrote this API for my own purposes and to practice programming. If you see anything that needs fixing or improved feel free to create an issue or pull request.
 
-[Public Demo of API](http://metacritic.marshallford.me)
+[Public Demo of API](http://api.marshallford.me)
 
 # Steps to install
 
